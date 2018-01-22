@@ -17,21 +17,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var helper: WorkHelper
 
     companion object {
-        const val TAG = "TESTMULTITHREAD"
+        const val TAG_ID = "YOUR_TAG_ID"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         helper = WorkHelper(this@MainActivity)
-        helper.execute(FetchUserData(), Callback<String> {
-            result -> Log.d(TAG, "TH: " + result.value)
+        helper.setNThreads(4) //optional. Default value = 4
+        helper.execute(FetchUserData(), TAG_ID, Callback<String> {
+            result -> Log.d("TEST", "TAG= " + result.tag + " Result=" + result.value)
         })
     }
 
     fun onClickStart(view: View) {
         helper.execute(WorkThread1(), Callback<Int> {
-            result -> Log.d(TAG, "TH: " + result.value)
+            result -> Log.d("TEST", "TH: " + result.value)
         })
 
         helper.execute(WorkThread2(), Response())
@@ -51,7 +52,7 @@ class MainActivity : AppCompatActivity() {
 
     inner class Response: Callback<Int> {
         override fun dataLoaded(result: WorkResult<Int>) {
-            Log.d(TAG, "TH: " + result.value)
+            Log.d("TEST", "TH: " + result.value)
         }
     }
 }

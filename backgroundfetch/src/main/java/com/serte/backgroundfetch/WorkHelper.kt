@@ -17,23 +17,25 @@ class WorkHelper(context: Context) {
     private val mContext: Context? = context.applicationContext
 
     fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>): WorkHelper {
-        return execute(workRunnable, callback, "")
+        return execute(workRunnable, "", callback)
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>, delay: Long): WorkHelper {
-        return execute(workRunnable, callback, "", delay)
+    fun execute(workRunnable: BaseWorkRunnable<*>, delay: Long, callback: Callback<*>): WorkHelper {
+        return execute(workRunnable, "", delay, callback)
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>, tag: String): WorkHelper {
+    fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, callback: Callback<*>): WorkHelper {
         workRunnable.setController(mController)
         workRunnable.setCallback(callback)
+        workRunnable.setTag(tag)
         workRunnable.start(executorService)
         return this
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>, tag: String, delay: Long): WorkHelper {
+    fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, delay: Long, callback: Callback<*>): WorkHelper {
         workRunnable.setController(mController)
         workRunnable.setCallback(callback)
+        workRunnable.setTag(tag)
         workRunnable.start(executorService, delay)
         return this
     }
