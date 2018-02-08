@@ -14,10 +14,10 @@ class WorkHelper(context: Context) {
     private val mController = Controller()
     private var isPause = false
     private val dispacthMap = LinkedHashMap<Callback<Any>, WorkResult<Any>>() //Ordered Hashmap for a correctly dispatchement
-    private val mContext: Context? = context.applicationContext
+    private val mContext: Context = context.applicationContext
 
     fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>): WorkHelper {
-        return execute(workRunnable, "", callback)
+        return execute(workRunnable, "", 0, callback)
     }
 
     fun execute(workRunnable: BaseWorkRunnable<*>, delay: Long, callback: Callback<*>): WorkHelper {
@@ -25,14 +25,11 @@ class WorkHelper(context: Context) {
     }
 
     fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, callback: Callback<*>): WorkHelper {
-        workRunnable.setController(mController)
-        workRunnable.setCallback(callback)
-        workRunnable.setTag(tag)
-        workRunnable.start(executorService)
-        return this
+        return execute(workRunnable, tag, 0, callback)
     }
 
     fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, delay: Long, callback: Callback<*>): WorkHelper {
+        workRunnable.setContext(mContext)
         workRunnable.setController(mController)
         workRunnable.setCallback(callback)
         workRunnable.setTag(tag)
@@ -59,7 +56,8 @@ class WorkHelper(context: Context) {
 
     inner class Controller : ControllerWork {
 
-        @Synchronized override fun finishload(result: WorkResult<Any>, callback: Callback<Any>?) {
+        @Synchronized
+        override fun finishload(result: WorkResult<Any>, callback: Callback<Any>?) {
             callback?.let { dispacthMap.put(it, result) }
             dispatchResult()
         }
@@ -70,7 +68,7 @@ class WorkHelper(context: Context) {
         for (callback in dispacthMap.keys) {
             val result = dispacthMap[callback]
             if (result != null) {
-                mContext?.runOnUiThread {
+                mContext.runOnUiThread {
                     callback.dataLoaded(result)
                 }
             }
