@@ -6,11 +6,7 @@ package com.serte.backgroundfetch
 class WorkResult<T> {
 
     var tag = ""
-    var status =  Status()
+    val status =  Status()
     var value: T? = null
 
-    inner class Status {
-        var type: StatusType = StatusType.NO_ERRORS
-        var message: String  = ""
-    }
 }
