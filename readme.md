@@ -11,7 +11,7 @@ maven {
 }
 
 dependencies {
-    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.6'
+    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.7'
 }
 ```
 
@@ -40,19 +40,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         helper = WorkHelper(this@MainActivity)
         helper.setNThreads(2) //optional, default value = 4
+        if (!helper.isEnqueued(TAG)) {
         helper.execute(FetchUserData(), TAG, Callback<String> {
                     result -> Log.d(TAG, "TAG= " + result.tag + " Result=" + result.value)
                 })
-    }
-
-    override fun onResume() {
-        super.onResume()
-        helper.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        helper.onPause()
+         }
     }
 }
 ```
