@@ -8,11 +8,12 @@ import java.util.concurrent.Executors
 /**
  * Created by s.venturini on 20/01/2018.
  */
-class WorkHelper(context: Context) {
+open class WorkHelper(context: Context) {
 
     private var executorService = Executors.newFixedThreadPool(4)
     private val mController = Controller()
     private var isPause = false
+    private val enqueuedMap = HashMap<String, Boolean>()
     private val dispacthMap = LinkedHashMap<Callback<Any>, WorkResult<Any>>() //Ordered Hashmap for a correctly dispatchement
     private val mContext: Context = context.applicationContext
 
@@ -34,14 +35,15 @@ class WorkHelper(context: Context) {
         workRunnable.setCallback(callback)
         workRunnable.setTag(tag)
         workRunnable.start(executorService, delay)
+        enqueuedMap[tag] = true
         return this
     }
 
-    fun onPause() {
+    open fun onPause() {
         isPause = true
     }
 
-    fun onResume() {
+    open fun onResume() {
         isPause = false
         dispatchResult()
     }
@@ -50,14 +52,18 @@ class WorkHelper(context: Context) {
         executorService = Executors.newFixedThreadPool(value)
     }
 
+    fun isEnqueued(tag: String): Boolean {
+        return enqueuedMap.containsKey(tag)
+    }
+
     internal interface ControllerWork {
-        fun finishload(result: WorkResult<Any>, callback: Callback<Any>?)
+        fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>?)
     }
 
     inner class Controller : ControllerWork {
 
         @Synchronized
-        override fun finishload(result: WorkResult<Any>, callback: Callback<Any>?) {
+        override fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>?) {
             callback?.let { dispacthMap.put(it, result) }
             dispatchResult()
         }
@@ -71,6 +77,7 @@ class WorkHelper(context: Context) {
                 mContext.runOnUiThread {
                     callback.dataLoaded(result)
                 }
+                enqueuedMap.remove(result.tag)
             }
         }
         dispacthMap.clear()

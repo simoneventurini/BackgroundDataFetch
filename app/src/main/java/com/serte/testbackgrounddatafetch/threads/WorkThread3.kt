@@ -11,6 +11,6 @@ class WorkThread3 : BaseWorkRunnable<Int>() {
 
     override fun execute(context: Context?, result: WorkResult<Int>) {
         result.value = 3
-        Thread.sleep(30)
+        Thread.sleep(3000)
     }
 }
