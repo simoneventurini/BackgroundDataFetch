@@ -16,6 +16,6 @@ class WorkThread2 : BaseWorkRunnable<Int>() {
         result.status.message = ""
         result.status.type = StatusType.NO_ERRORS
 
-        Thread.sleep(40)
+        Thread.sleep(4000)
     }
 }

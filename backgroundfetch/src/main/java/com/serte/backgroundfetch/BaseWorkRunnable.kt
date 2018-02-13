@@ -54,7 +54,7 @@ abstract class BaseWorkRunnable<T>: Runnable {
 
     private fun dispatchResult() {
         if (mController != null) {
-            mController!!.finishload(result as WorkResult<Any>, (callback as Callback<Any>?)!!)
+            mController!!.onFinishLoad(result as WorkResult<Any>, (callback as Callback<Any>?)!!)
         }
     }
 }
