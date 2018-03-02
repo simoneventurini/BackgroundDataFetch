@@ -1,8 +1,7 @@
 package com.serte.backgroundfetch
 
 import android.content.Context
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
+import org.jetbrains.anko.doAsync
 
 /**
  * Created by s.venturini on 20/01/2018.
@@ -15,22 +14,21 @@ abstract class BaseWorkRunnable<T>: Runnable {
     }
 
     fun setCallback(callback: Callback<*>) {
-        this.callback = callback
+        this.weakCallback = callback
     }
 
-    private var mController: WorkHelper.Controller? = null
-    private var future: Future<*>? = null
-    private var callback: Callback<*>? = null
+    private lateinit var mController: WorkHelper.Controller
+    private var weakCallback: Callback<*>? = null
     private var context: Context? = null
+    private var delay = 0L
 
-    private var result: WorkResult<T> = WorkResult()
+    var result: WorkResult<T> = WorkResult()
 
-    fun start(service: ExecutorService) {
-        future = service.submit(this)
-    }
-
-    fun start(service: ExecutorService, delay: Long) {
-        future = service.submit(this, delay)
+    fun start() {
+        context.doAsync {
+            Thread.sleep(delay)
+            mController.getExecutorService().execute(this@BaseWorkRunnable)
+        }
     }
 
     fun setContext(context: Context) {
@@ -38,7 +36,11 @@ abstract class BaseWorkRunnable<T>: Runnable {
     }
 
     fun setTag(tag: String) {
-        result.tag = tag
+        result.eventTag = tag
+    }
+
+    fun setDelay(delay: Long) {
+        this.delay = delay
     }
 
     override fun run() {
@@ -46,15 +48,9 @@ abstract class BaseWorkRunnable<T>: Runnable {
         dispatchResult()
     }
 
-    protected fun onDestroy() {
-        if (future != null && !future!!.isCancelled) future!!.cancel(true)
-    }
-
     protected abstract fun execute(context: Context?, result: WorkResult<T>)
 
     private fun dispatchResult() {
-        if (mController != null) {
-            mController!!.onFinishLoad(result as WorkResult<Any>, (callback as Callback<Any>?)!!)
-        }
+        mController.onFinishLoad(result as WorkResult<Any>, weakCallback as Callback<Any>)
     }
 }

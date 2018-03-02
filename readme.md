@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         helper.setNThreads(2) //optional, default value = 4
         if (!helper.isEnqueued(TAG)) {
         helper.execute(FetchUserData(), TAG, Callback<String> {
-                    result -> Log.d(TAG, "TAG= " + result.tag + " Result=" + result.value)
+                    result -> Log.d(TAG, "TAG= " + result.eventTag + " Result=" + result.value)
                 })
          }
     }

@@ -5,7 +5,7 @@ package com.serte.backgroundfetch
  */
 class WorkResult<T> {
 
-    var tag = ""
+    var eventTag = ""
     val status =  Status()
     var value: T? = null
 

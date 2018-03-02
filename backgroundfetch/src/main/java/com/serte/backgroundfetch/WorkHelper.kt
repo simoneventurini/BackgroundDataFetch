@@ -1,41 +1,77 @@
 package com.serte.backgroundfetch
 
 import android.content.Context
+import android.content.Intent
+import android.support.v4.content.LocalBroadcastManager
+import org.greenrobot.eventbus.Subscribe
 import org.jetbrains.anko.runOnUiThread
 import java.util.*
-import java.util.concurrent.Executors
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /**
  * Created by s.venturini on 20/01/2018.
  */
-open class WorkHelper(context: Context) {
+open class WorkHelper (val mContext: Context) : WorkInterface {
 
-    private var executorService = Executors.newFixedThreadPool(4)
+
+    companion object {
+
+        private val runnableMap = HashMap<String, ArrayList<BaseWorkRunnable<*>>>()
+        fun notifyEvent(eventTag: String) {
+            //val value = runnableMap[eventTag]?.get(0)?.get()
+
+            runnableMap[eventTag].let { it -> it?.forEach { runnable -> runnable.start() }}
+        }
+    }
+
+    private val sThreadFactory = object : ThreadFactory {
+        private val mCount = AtomicInteger(1)
+
+        override fun newThread(r: Runnable): Thread {
+            return Thread(r, "ModernAsyncTask #" + mCount.getAndIncrement())
+        }
+    }
+    private val threadPoolExecutor: Executor = ThreadPoolExecutor(5, 128, 1, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(10), sThreadFactory)
+    private var executor = threadPoolExecutor
     private val mController = Controller()
     private var isPause = false
     private val enqueuedMap = HashMap<String, Boolean>()
     private val dispacthMap = LinkedHashMap<Callback<Any>, WorkResult<Any>>() //Ordered Hashmap for a correctly dispatchement
-    private val mContext: Context = context.applicationContext
+    //private val observerMap = HashMap<String, Observer>()
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>): WorkHelper {
+    override fun execute(workRunnable: BaseWorkRunnable<*>, callback: Callback<*>): WorkHelper {
         return execute(workRunnable, "", 0, callback)
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, delay: Long, callback: Callback<*>): WorkHelper {
+    override fun execute(workRunnable: BaseWorkRunnable<*>, delay: Long, callback: Callback<*>): WorkHelper {
         return execute(workRunnable, "", delay, callback)
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, callback: Callback<*>): WorkHelper {
+    override fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, callback: Callback<*>): WorkHelper {
         return execute(workRunnable, tag, 0, callback)
     }
 
-    fun execute(workRunnable: BaseWorkRunnable<*>, tag: String, delay: Long, callback: Callback<*>): WorkHelper {
+    override fun execute(workRunnable: BaseWorkRunnable<*>, eventTag: String, delay: Long, callback: Callback<*>): WorkHelper {
         workRunnable.setContext(mContext)
         workRunnable.setController(mController)
         workRunnable.setCallback(callback)
-        workRunnable.setTag(tag)
-        workRunnable.start(executorService, delay)
-        enqueuedMap[tag] = true
+        workRunnable.setTag(eventTag)
+        workRunnable.setDelay(delay)
+        enqueuedMap[eventTag] = true
+        workRunnable.start()
+        if (runnableMap.containsKey(eventTag)){
+            val listRunnable = runnableMap[eventTag]
+            listRunnable?.add(workRunnable)
+
+        } else {
+            val listRunnable = ArrayList<BaseWorkRunnable<*>>()
+            listRunnable.add(workRunnable)
+            runnableMap[eventTag] = listRunnable
+
+        }
         return this
     }
 
@@ -49,26 +85,31 @@ open class WorkHelper(context: Context) {
     }
 
     fun setNThreads(value: Int) {
-        executorService = Executors.newFixedThreadPool(value)
+        executor = Executors.newFixedThreadPool(value)
     }
 
-    fun isEnqueued(tag: String): Boolean {
-        return enqueuedMap.containsKey(tag)
+    fun isEnqueued(eventTag: String): Boolean {
+        return enqueuedMap.containsKey(eventTag)
     }
 
     internal interface ControllerWork {
-        fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>?)
+        fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>)
     }
 
     inner class Controller : ControllerWork {
 
         @Synchronized
-        override fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>?) {
-            callback?.let { dispacthMap.put(it, result) }
+        override fun onFinishLoad(result: WorkResult<Any>, callback: Callback<Any>) {
+            dispacthMap.put(callback, result)
             dispatchResult()
+        }
+
+        fun getExecutorService(): Executor {
+            return executor
         }
     }
 
+    @Subscribe
     fun dispatchResult() {
         if (isPause) return
         for (callback in dispacthMap.keys) {
@@ -77,7 +118,7 @@ open class WorkHelper(context: Context) {
                 mContext.runOnUiThread {
                     callback.dataLoaded(result)
                 }
-                enqueuedMap.remove(result.tag)
+                enqueuedMap.remove(result.eventTag)
             }
         }
         dispacthMap.clear()
