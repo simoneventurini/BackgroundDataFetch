@@ -11,7 +11,7 @@ maven {
 }
 
 dependencies {
-    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.7'
+    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.8'
 }
 ```
 
@@ -46,5 +46,15 @@ class MainActivity : AppCompatActivity() {
                 })
          }
     }
+    
+    override fun onResume() {
+            super.onResume()
+            helper.onResume()
+        }
+    
+        override fun onPause() {
+            super.onPause()
+            helper.onPause()
+        }
 }
 ```
