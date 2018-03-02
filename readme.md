@@ -46,5 +46,15 @@ class MainActivity : AppCompatActivity() {
                 })
          }
     }
+    
+    override fun onResume() {
+            super.onResume()
+            helper.onResume()
+        }
+    
+        override fun onPause() {
+            super.onPause()
+            helper.onPause()
+        }
 }
 ```

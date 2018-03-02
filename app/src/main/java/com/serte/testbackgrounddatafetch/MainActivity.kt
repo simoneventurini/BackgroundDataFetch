@@ -5,7 +5,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import com.serte.backgroundfetch.Callback
-import com.serte.backgroundfetch.WorkHelperActivity
+import com.serte.backgroundfetch.WorkHelper
 import com.serte.backgroundfetch.WorkResult
 import technogym.testmultithread.WorkThread1
 import technogym.testmultithread.WorkThread2
@@ -14,7 +14,7 @@ import technogym.testmultithread.WorkThread4
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var helper: WorkHelperActivity
+    private lateinit var helper: WorkHelper
 
     companion object {
         const val TAG_ID = "YOUR_TAG_ID"
@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        helper = WorkHelperActivity(this@MainActivity)
+        helper = WorkHelper(this@MainActivity)
         helper.setNThreads(4) //optional. Default value = 4
         helper.execute(FetchUserData(), TAG_ID, Callback<String> { result ->
             Log.d("WorkHelper", "TAG= " + result.tag + " Result=" + result.value)
@@ -45,5 +45,15 @@ class MainActivity : AppCompatActivity() {
         override fun dataLoaded(result: WorkResult<Int>) {
             Log.d("WorkHelper", "TH: " + result.value)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        helper.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        helper.onPause()
     }
 }
