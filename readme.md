@@ -11,7 +11,7 @@ maven {
 }
 
 dependencies {
-    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.9'
+    compile 'com.github.simoneventurini:BackgroundDataFetch:1.0.10'
 }
 ```
 

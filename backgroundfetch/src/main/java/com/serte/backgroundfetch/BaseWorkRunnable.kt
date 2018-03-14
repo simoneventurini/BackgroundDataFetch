@@ -1,6 +1,7 @@
 package com.serte.backgroundfetch
 
 import android.content.Context
+import org.jetbrains.anko.doAsync
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
@@ -30,7 +31,12 @@ abstract class BaseWorkRunnable<T>: Runnable {
     }
 
     fun start(service: ExecutorService, delay: Long) {
-        future = service.submit(this, delay)
+        val runnable = this
+        doAsync {
+            Thread.sleep(delay)
+            future = service.submit(runnable)
+        }
+
     }
 
     fun setContext(context: Context) {
