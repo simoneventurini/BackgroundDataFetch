@@ -69,6 +69,7 @@ open class WorkHelper(context: Context) {
         }
     }
 
+    @Synchronized
     fun dispatchResult() {
         if (isPause) return
         for (callback in dispacthMap.keys) {
